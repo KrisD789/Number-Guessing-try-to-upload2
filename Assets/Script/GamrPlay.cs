@@ -2,6 +2,8 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections;
+using NUnit.Framework;
+using System.Collections.Generic;
 
 public class GamrPlay : MonoBehaviour
 {
@@ -26,6 +28,10 @@ public class GamrPlay : MonoBehaviour
     private bool isPlayerTurn;
     private bool gameActive;
 
+    private int computerMinGuess;
+    private int computerMaxGuess;
+    private List<int> computerGuesses;
+
     void InitializedUI() //ผูกปุ่มเข้ากับฟังชั่น
     {
         submitButton.onClick.AddListener(SubmitGuess);
@@ -45,12 +51,12 @@ public class GamrPlay : MonoBehaviour
 
         if (!int.TryParse(input, out guess))
         {
-            gameState.text = "Plese enter a valid number";
+            gameState.text = $"<sprite=15> Plese enter a valid number";
             return;
         }
         if (guess < minNumber ||  guess > maxNumber)
         {
-            gameState.text = $"Please enter a number between {minNumber} - {maxNumber}";
+            gameState.text = $"<sprite=15> Please enter a number between {minNumber} - {maxNumber}";
             return;
         }
         ProcessGuess(guess, true);
@@ -63,8 +69,24 @@ public class GamrPlay : MonoBehaviour
         yield return new WaitForSeconds(2f); //Wait for simulate thinking
         
         if (!gameActive) yield break;
+        if(computerGuesses.Count > 0)
+        {
+            int lastGuess = computerGuesses[computerGuesses.Count - 1];
+            if (targetIsHigher)
+            {
+                computerMinGuess = lastGuess + 1;
+            }
+            else
+            {
+                computerMaxGuess = lastGuess - 1;
+            }
+        }
+        //Ai use Brinary search
+        int computerGuess = (computerMinGuess + computerMaxGuess) / 2;
 
-        int computerGuess = Random.Range(minNumber, maxNumber + 1);
+        computerGuesses.Add(computerGuess);
+
+        //int computerGuess = Random.Range(minNumber, maxNumber + 1);
         ProcessGuess(computerGuess, false);
     }
     void EndGame()
@@ -87,21 +109,21 @@ public class GamrPlay : MonoBehaviour
         if (guess == targetNumber)
         {
             //Win
-            gameLog.text += $"{playerName} got it right!!\n";
+            gameLog.text += $"<sprite=\"symbols-01\" index=23> {playerName} got it right!!\n";
             EndGame();
         }
 
         else if (currentAttemps >= maxAttemps) 
         {
             //Lose
-            gameLog.text += $"GameOver!! The correct number was {targetNumber}\n";
+            gameLog.text += $"<sprite=10> GameOver!! The correct number was {targetNumber}\n";
             EndGame();
         }
         else
         {
             //Wrong guess - Give hint
             string hint = guess < targetNumber ? "Too Low" : "Too High";
-            gameLog.text += $"{hint}\n";
+            gameLog.text += $"<sprite=\"symbols-01\" index=24> {hint}\n";
 
             //switch player turn
             isPlayerTurn = !isPlayerTurn;
@@ -142,6 +164,10 @@ public class GamrPlay : MonoBehaviour
         guessInputField.text = " ";
         guessInputField.Select();
         guessInputField.ActivateInputField();
+
+        computerMinGuess = minNumber;
+        computerMaxGuess = maxNumber;
+        computerGuesses = new List<int>();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
